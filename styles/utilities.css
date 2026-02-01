@@ -20,6 +20,19 @@
    
    ================================================ */
 
+/* Bases View Integration - Fix overflow */
+.bases-view.is-grouped {
+    padding-bottom: 0 !important;
+}
+
+.bases-view {
+    padding-bottom: 0 !important;
+}
+
+.tn-bases-integration.tasknotes-plugin.tasknotes-container.tn-tasknotesKanban {
+    height: 100%;
+}
+
 /* ================================================
    LAYOUT UTILITIES - FLEXBOX
    ================================================ */

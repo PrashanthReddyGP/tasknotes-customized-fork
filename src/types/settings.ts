@@ -122,6 +122,7 @@ export interface TaskNotesSettings {
 	pomodoroSoundVolume: number; // 0-100
 	pomodoroStorageLocation: "plugin" | "daily-notes"; // where to store pomodoro history data
 	pomodoroMobileSidebar: "tab" | "left" | "right"; // where to open pomodoro view on mobile
+	pomodoroTimerMode: "auto" | "manual"; // auto: timer stops/switches automatically, manual: timer continues into overtime
 	// Editor settings
 	enableTaskLinkOverlay: boolean;
 	disableOverlayOnAlias: boolean;
@@ -311,11 +312,11 @@ export interface GoogleCalendarExportSettings {
 export interface CalendarViewSettings {
 	// Default view
 	defaultView:
-		| "dayGridMonth"
-		| "timeGridWeek"
-		| "timeGridDay"
-		| "multiMonthYear"
-		| "timeGridCustom";
+	| "dayGridMonth"
+	| "timeGridWeek"
+	| "timeGridDay"
+	| "multiMonthYear"
+	| "timeGridCustom";
 	// Custom multi-day view settings
 	customDayCount: number; // Number of days to show in custom view (2-10)
 	// Time settings

@@ -1,0 +1,225 @@
+/* Task events get ONLY functional enhancements - NO visual styling differences */
+.fc-list-event.fc-list-task-card .fc-list-event-title {
+    /* Keep base styling identical to ICS events - no background, borders, or shadows */
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Remove task-specific hover - now handled by base .fc-list-event:hover */
+
+/* Hide default FullCalendar dot for tasks since we have custom indicators */
+.fc-list-event.fc-list-task-card .fc-list-event-dot {
+    display: none;
+}
+
+/* Style the status dot in graphic column */
+.fc-list-event-status-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+}
+
+/* Prevent graphic column from getting hover background */
+.fc-list-event:hover .fc-list-event-graphic {
+    background-color: transparent !important;
+}
+
+/* Task title row with indicators on same line */
+.fc-list-task-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+/* Metadata spacing without separators */
+.fc-list-task-metadata > span {
+    display: block;
+    margin: 2px 0;
+}
+
+/* Status and priority dots */
+.fc-list-task-status-dot,
+.fc-list-task-priority-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    background-color: transparent;
+    flex-shrink: 0;
+}
+
+.fc-list-task-priority-dot {
+    cursor: var(--cursor);
+}
+
+.fc-list-task-priority-dot {
+    background-color: var(--priority-color, currentColor);
+}
+
+/* Recurring indicator styling */
+.fc-list-task-recurring-indicator {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    opacity: 0.7;
+    cursor: var(--cursor);
+}
+
+.fc-list-task-recurring-indicator:hover {
+    opacity: 1;
+}
+
+.fc-list-task-status-dot {
+    border-color: var(--current-status-color, var(--text-muted));
+}
+
+/* Recurring indicator */
+.fc-list-task-recurring-indicator {
+    font-size: 12px;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+/* Task title */
+.fc-list-task-title {
+    font-weight: 500 !important;
+    color: var(--text-normal) !important;
+    font-size: 14px !important;
+    flex-grow: 1;
+}
+
+/* Task metadata */
+.fc-list-task-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.fc-list-task-metadata > span {
+    background-color: var(--background-secondary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.fc-list-task-projects {
+    background-color: rgba(var(--color-blue-rgb, 13 110 253), 0.1) !important;
+    color: var(--color-blue) !important;
+}
+
+.fc-list-task-contexts {
+    background-color: rgba(var(--color-green-rgb, 25 135 84), 0.1) !important;
+    color: var(--color-green) !important;
+}
+
+.fc-list-task-tags {
+    background-color: rgba(var(--color-purple-rgb, 102 16 242), 0.1) !important;
+    color: var(--color-purple) !important;
+}
+
+.fc-list-task-time-estimate {
+    background-color: rgba(var(--color-orange-rgb, 255 159 67), 0.1) !important;
+    color: var(--color-orange) !important;
+}
+
+.fc-list-task-metadata-separator {
+    color: var(--text-faint);
+    font-weight: 300;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .fc-list-task-metadata {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .fc-list-task-title-row {
+        gap: 4px;
+    }
+}
+
+/* Animation for newly added events */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fc-list-event.fc-list-task-card[data-newly-added] {
+    animation: slideInUp 0.3s ease-out;
+}
+
+/* Dark mode fixes for FullCalendar popover ("+more" popup) */
+.theme-dark .advanced-calendar-view .fc-popover {
+    background: var(--background-primary) !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.theme-dark .advanced-calendar-view .fc-popover-header {
+    background: var(--background-secondary) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+}
+
+.theme-dark .advanced-calendar-view .fc-popover-title {
+    color: var(--text-normal) !important;
+}
+
+.theme-dark .advanced-calendar-view .fc-popover-close {
+    color: var(--text-muted) !important;
+}
+
+.theme-dark .advanced-calendar-view .fc-popover-close:hover {
+    color: var(--text-normal) !important;
+    background: var(--background-modifier-hover) !important;
+}
+
+.theme-dark .advanced-calendar-view .fc-popover-body {
+    background: var(--background-primary) !important;
+    color: var(--text-normal) !important;
+}
+
+/* Dark mode fixes for timeGrid more link (eventMaxStack) */
+.advanced-calendar-view .fc-timegrid-more-link {
+    color: var(--text-normal);
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 2px;
+}
+
+.advanced-calendar-view .fc-timegrid-more-link:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.theme-dark .advanced-calendar-view .fc-timegrid-more-link {
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    border-color: var(--background-modifier-border);
+}
+
+.theme-dark .advanced-calendar-view .fc-timegrid-more-link:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}

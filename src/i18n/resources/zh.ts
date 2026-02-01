@@ -188,10 +188,10 @@ export const zh: TranslationTree = {
 				customDays: "{count}天视图",
 			},
 			settings: {
-		header: {
-			documentation: "Documentation",
-			documentationUrl: "https://tasknotes.dev",
-		},
+				header: {
+					documentation: "Documentation",
+					documentationUrl: "https://tasknotes.dev",
+				},
 				groups: {
 					dateNavigation: "日期导航",
 					events: "事件",
@@ -298,6 +298,7 @@ export const zh: TranslationTree = {
 					long: "长",
 				},
 				breakComplete: "休息完成！准备好进行下一个番茄钟了吗？",
+				overtime: "超时",
 			},
 			buttons: {
 				start: "开始",
@@ -311,6 +312,8 @@ export const zh: TranslationTree = {
 				changeTask: "更换任务...",
 				clearTask: "清除任务",
 				selectDifferentTask: "选择其他任务",
+				startBreak: "开始休息",
+				startWork: "开始工作",
 			},
 			notices: {
 				noTasks: "未找到未归档的任务。请先创建一些任务。",
@@ -325,45 +328,70 @@ export const zh: TranslationTree = {
 			sections: {
 				overview: "概览",
 				today: "今天",
+				yesterday: "昨天",
 				week: "本周",
-				allTime: "全部时间",
-				recent: "最近的会话",
+				month: "本月",
+				allTime: "累计",
+				recent: "最近记录",
 			},
 			overviewCards: {
 				todayPomos: {
-					label: "今日番茄钟",
+					label: "今日番茄数",
 					change: {
-						more: "比昨天多{count}个",
-						less: "比昨天少{count}个",
+						more: "比昨天多 {count} 个",
+						less: "比昨天少 {count} 个",
 					},
 				},
 				totalPomos: {
-					label: "总番茄钟数",
+					label: "总番茄数",
+					sub: "终生累计",
 				},
 				todayFocus: {
-					label: "今日专注时间",
+					label: "今日专注时长",
 					change: {
-						more: "比昨天多{duration}",
-						less: "比昨天少{duration}",
+						more: "比昨天多 {duration}",
+						less: "比昨天少 {duration}",
 					},
 				},
 				totalFocus: {
 					label: "总专注时长",
+					sub: "包含生成的",
 				},
 			},
 			stats: {
 				pomodoros: "番茄钟",
-				streak: "连击",
-				minutes: "分钟",
+				breaks: "休息",
+				interrupts: "中断",
+				streak: "连续天数",
+				minutes: "分",
 				average: "平均时长",
-				completion: "完成率",
+				completion: "完成",
+				table: {
+					headers: {
+						count: "次数",
+						duration: "时长",
+						overtime: "加班",
+						avgLen: "平均",
+						done: "% 完成",
+						shortLong: "短 / 长",
+						rate: "比例",
+						total: "总计",
+						reserved: "保留",
+					},
+				},
 			},
 			recents: {
-				empty: "尚未记录会话",
-				duration: "{minutes}分钟",
+				empty: "暂无记录",
+				duration: "{minutes} 分",
+				subInfo: "{overtime} 超时 | {paused} 暂停",
 				status: {
 					completed: "已完成",
 					interrupted: "已中断",
+				},
+				types: {
+					work: "工作",
+					shortBreak: "短休息",
+					longBreak: "长休息",
 				},
 			},
 		},

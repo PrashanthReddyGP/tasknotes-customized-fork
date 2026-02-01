@@ -591,6 +591,8 @@ export interface PomodoroSession {
 	completed: boolean;
 	interrupted?: boolean;
 	activePeriods: PomodoroTimePeriod[]; // Array of active timing periods (excludes pauses)
+	overtime?: boolean; // NEW: Session ran into overtime (manual mode)
+	overtimeDuration?: number; // NEW: Minutes beyond planned duration
 }
 
 export interface PomodoroState {
@@ -598,6 +600,7 @@ export interface PomodoroState {
 	currentSession?: PomodoroSession;
 	timeRemaining: number; // seconds
 	nextSessionType?: "work" | "short-break" | "long-break"; // What type of session to start next when no current session
+	inOvertime?: boolean; // NEW: Currently in overtime period
 }
 
 export interface PomodoroSessionHistory {
@@ -608,6 +611,7 @@ export interface PomodoroSessionHistory {
 	type: "work" | "short-break" | "long-break";
 	taskPath?: string; // optional task association
 	completed: boolean; // true if session finished normally, false if interrupted
+	interrupted?: boolean; // explicit flag indicating session was interrupted (not just incomplete)
 	activePeriods: PomodoroTimePeriod[]; // Array of active timing periods (excludes pauses)
 }
 
@@ -617,6 +621,18 @@ export interface PomodoroHistoryStats {
 	totalMinutes: number;
 	averageSessionLength: number;
 	completionRate: number; // percentage of sessions completed vs interrupted
+	// Break statistics
+	totalBreakMinutes?: number;
+	shortBreaksCompleted?: number;
+	longBreaksCompleted?: number;
+	breakCompletionRate?: number;
+	averageBreakLength?: number;
+	breakOvertimeMinutes?: number;
+	// Interruption statistics
+	totalInterrupted?: number;
+	interruptionRate?: number; // percentage of sessions interrupted
+	timeSpentInInterrupted?: number; // minutes from interrupted sessions (not discarded)
+	overtimeMinutes?: number; // total minutes spent in overtime
 }
 
 // Field mapping and customization types

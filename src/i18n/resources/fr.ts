@@ -188,10 +188,10 @@ export const fr: TranslationTree = {
 				customDays: "Vue {count} jours",
 			},
 			settings: {
-		header: {
-			documentation: "Documentation",
-			documentationUrl: "https://tasknotes.dev",
-		},
+				header: {
+					documentation: "Documentation",
+					documentationUrl: "https://tasknotes.dev",
+				},
 				groups: {
 					dateNavigation: "Navigation par date",
 					events: "Événements",
@@ -298,6 +298,7 @@ export const fr: TranslationTree = {
 					long: "longue",
 				},
 				breakComplete: "Pause terminée ! Prêt pour le prochain pomodoro ?",
+				overtime: "Dépassement",
 			},
 			buttons: {
 				start: "Démarrer",
@@ -311,6 +312,8 @@ export const fr: TranslationTree = {
 				changeTask: "Changer de tâche...",
 				clearTask: "Effacer la tâche",
 				selectDifferentTask: "Sélectionner une autre tâche",
+				startBreak: "Démarrer la pause",
+				startWork: "Démarrer le travail",
 			},
 			notices: {
 				noTasks: "Aucune tâche non archivée retrouvée. Créez d'abord quelques tâches.",
@@ -320,50 +323,75 @@ export const fr: TranslationTree = {
 		},
 		pomodoroStats: {
 			title: "Statistiques Pomodoro",
-			heading: "Statistiques Pomodoro",
+			heading: "STATS POMODORO",
 			refresh: "Actualiser",
 			sections: {
 				overview: "Aperçu",
 				today: "Aujourd'hui",
+				yesterday: "Hier",
 				week: "Cette semaine",
-				allTime: "Historique",
-				recent: "Sessions récentes",
+				month: "Ce mois-ci",
+				allTime: "Tout le temps",
+				recent: "SESSIONS RÉCENTES",
 			},
 			overviewCards: {
 				todayPomos: {
-					label: "Pomodoros du jour",
+					label: "Pomos du jour",
 					change: {
 						more: "{count} de plus qu'hier",
 						less: "{count} de moins qu'hier",
 					},
 				},
 				totalPomos: {
-					label: "Total des pomodoros",
+					label: "Pomos totaux",
+					sub: "À vie",
 				},
 				todayFocus: {
-					label: "Temps de focus du jour",
+					label: "Focus du jour",
 					change: {
 						more: "{duration} de plus qu'hier",
 						less: "{duration} de moins qu'hier",
 					},
 				},
 				totalFocus: {
-					label: "Durée de focus cumulée",
+					label: "Durée totale de focus",
+					sub: "Incl. générés",
 				},
 			},
 			stats: {
-				pomodoros: "Sessions",
+				pomodoros: "Pomodoros",
+				breaks: "Pauses",
+				interrupts: "Interruptions",
 				streak: "Série",
-				minutes: "Minutes totales",
+				minutes: "min",
 				average: "Durée moy.",
-				completion: "Taux d'achèvement",
+				completion: "Terminé",
+				table: {
+					headers: {
+						count: "NOMBRE",
+						duration: "DURÉE",
+						overtime: "HEURES SUPP.",
+						avgLen: "DURÉE MOY.",
+						done: "% FAIT",
+						shortLong: "COURT / LONG",
+						rate: "TAUX",
+						total: "TOTAL",
+						reserved: "PRÉSERVÉ",
+					},
+				},
 			},
 			recents: {
-				empty: "Aucune session enregistrée pour le moment",
-				duration: "Durée : {minutes} min",
+				empty: "Aucune session enregistrée",
+				duration: "{minutes} min",
+				subInfo: "{overtime} Supp. | {paused} En pause",
 				status: {
-					completed: "Terminée",
-					interrupted: "Interrompue",
+					completed: "COMPLÉTÉ",
+					interrupted: "INTERROMPU",
+				},
+				types: {
+					work: "Travail",
+					shortBreak: "Pause Courte",
+					longBreak: "Pause Longue",
 				},
 			},
 		},

@@ -518,8 +518,9 @@
 
 /* Mini calendar minimalist adjustments */
 .tasknotes-plugin .mini-calendar-view {
-    padding: var(--tn-spacing-xs);
+    padding: var(--tn-spacing-md);
     gap: var(--tn-spacing-xs);
+    margin: var(--tn-spacing-md) var(--tn-spacing-md) 0 var(--tn-spacing-md);
 }
 
 .tasknotes-plugin .mini-calendar-view__controls {
@@ -937,15 +938,16 @@
 
 /* Update grid layout to include week number column */
 .tasknotes-plugin .mini-calendar-view__grid-header {
-    grid-template-columns: 40px repeat(7, 1fr);
+    grid-template-columns: repeat(7, 1fr);
 }
 
 .tasknotes-plugin .mini-calendar-view__week {
-    grid-template-columns: 40px repeat(7, 1fr);
+    grid-template-columns: repeat(7, 1fr);
 }
 
 /* Week number header cell */
 .tasknotes-plugin .mini-calendar-view__week-header {
+    display: none;
     text-align: center;
     font-weight: 500;
     font-size: var(--tn-font-size-xs);
@@ -959,7 +961,7 @@
 
 /* Week number cell */
 .tasknotes-plugin .mini-calendar-week-number {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     font-size: var(--tn-font-size-xs);

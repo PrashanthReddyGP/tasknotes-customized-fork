@@ -417,6 +417,22 @@ export function renderFeaturesTab(
 					},
 				})
 			);
+
+			group.addSetting((setting) =>
+				configureDropdownSetting(setting, {
+					name: "Timer Mode",
+					desc: "Auto: Timer stops and switches automatically. Manual: Timer continues into overtime for accurate tracking.",
+					options: [
+						{ value: "auto", label: "Auto-switch (default)" },
+						{ value: "manual", label: "Manual (track overtime)" },
+					],
+					getValue: () => plugin.settings.pomodoroTimerMode,
+					setValue: async (value: string) => {
+						plugin.settings.pomodoroTimerMode = value as "auto" | "manual";
+						save();
+					},
+				})
+			);
 		}
 	);
 

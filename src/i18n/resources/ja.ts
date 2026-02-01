@@ -188,10 +188,10 @@ export const ja: TranslationTree = {
 				customDays: "{count}日表示",
 			},
 			settings: {
-		header: {
-			documentation: "Documentation",
-			documentationUrl: "https://tasknotes.dev",
-		},
+				header: {
+					documentation: "Documentation",
+					documentationUrl: "https://tasknotes.dev",
+				},
 				groups: {
 					dateNavigation: "日付ナビゲーション",
 					events: "イベント",
@@ -320,50 +320,75 @@ export const ja: TranslationTree = {
 		},
 		pomodoroStats: {
 			title: "ポモドーロ統計",
-			heading: "ポモドーロ統計",
+			heading: "ポモドーロ統計データ",
 			refresh: "更新",
 			sections: {
 				overview: "概要",
 				today: "今日",
+				yesterday: "昨日",
 				week: "今週",
-				allTime: "全期間",
+				month: "今月",
+				allTime: "累計",
 				recent: "最近のセッション",
 			},
 			overviewCards: {
 				todayPomos: {
-					label: "今日のポモ",
+					label: "今日のポモ数",
 					change: {
-						more: "昨日より{count}多い",
-						less: "昨日より{count}少ない",
+						more: "昨日より {count} 個多い",
+						less: "昨日より {count} 個少ない",
 					},
 				},
 				totalPomos: {
-					label: "総ポモ数",
+					label: "合計ポモ数",
+					sub: "ライフタイム",
 				},
 				todayFocus: {
-					label: "今日のフォーカス",
+					label: "今日の集中時間",
 					change: {
-						more: "昨日より{duration}多い",
-						less: "昨日より{duration}少ない",
+						more: "昨日より {duration} 長い",
+						less: "昨日より {duration} 短い",
 					},
 				},
 				totalFocus: {
-					label: "総フォーカス時間",
+					label: "合計集中時間",
+					sub: "自動生成分を含む",
 				},
 			},
 			stats: {
 				pomodoros: "ポモドーロ",
-				streak: "連続記録",
+				breaks: "休憩",
+				interrupts: "中断",
+				streak: "継続日数",
 				minutes: "分",
-				average: "平均長さ",
+				average: "平均時間",
 				completion: "完了",
+				table: {
+					headers: {
+						count: "回数",
+						duration: "時間",
+						overtime: "超過時間",
+						avgLen: "平均時間",
+						done: "% 完了",
+						shortLong: "短 / 長",
+						rate: "割合",
+						total: "合計",
+						reserved: "保存済み",
+					},
+				},
 			},
 			recents: {
-				empty: "まだセッションが記録されていません",
-				duration: "{minutes}分",
+				empty: "記録はまだありません",
+				duration: "{minutes} 分",
+				subInfo: "{overtime} 超過 | {paused} 中断",
 				status: {
 					completed: "完了",
 					interrupted: "中断",
+				},
+				types: {
+					work: "集中",
+					shortBreak: "短めの休憩",
+					longBreak: "長めの休憩",
 				},
 			},
 		},

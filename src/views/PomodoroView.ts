@@ -30,6 +30,7 @@ export class PomodoroView extends ItemView {
 	private taskDisplay: HTMLElement | null = null;
 	private statsDisplay: HTMLElement | null = null;
 	private taskSelectButton: HTMLButtonElement | null = null;
+	private switchButton: HTMLButtonElement | null = null;
 	private taskClearButton: HTMLButtonElement | null = null;
 	private currentSelectedTask: TaskInfo | null = null;
 	private taskCardContainer: HTMLElement | null = null;
@@ -197,6 +198,7 @@ export class PomodoroView extends ItemView {
 		this.taskClearButton = null;
 		this.currentSelectedTask = null;
 		this.taskCardContainer = null;
+		this.switchButton = null;
 		this.statElements = { pomodoros: null };
 
 		this.contentEl.empty();
@@ -338,6 +340,12 @@ export class PomodoroView extends ItemView {
 		});
 		this.stopButton.addClass("pomodoro-view__stop-button--hidden");
 
+		this.switchButton = primaryControls.createEl("button", {
+			text: this.t("views.pomodoro.buttons.switch"),
+			cls: "pomodoro-view__switch-button",
+		});
+		this.switchButton.addClass("pomodoro-view__switch-button--hidden");
+
 		// Skip break button (only shown after sessions)
 		this.skipBreakButton = controlSection.createEl("button", {
 			cls: "pomodoro-view__skip-break-button",
@@ -401,6 +409,10 @@ export class PomodoroView extends ItemView {
 
 		this.registerDomEvent(this.stopButton, "click", () => {
 			this.plugin.pomodoroService.stopPomodoro();
+		});
+
+		this.registerDomEvent(this.switchButton, "click", () => {
+			this.plugin.pomodoroService.switchSession();
 		});
 
 		this.registerDomEvent(this.skipBreakButton, "click", () => {
@@ -882,12 +894,17 @@ export class PomodoroView extends ItemView {
 		// Update status
 		if (this.statusDisplay) {
 			if (state.isRunning && state.currentSession) {
-				const typeText =
+				let typeText =
 					state.currentSession.type === "work"
 						? this.t("views.pomodoro.status.working")
 						: state.currentSession.type === "short-break"
 							? this.t("views.pomodoro.status.shortBreak")
 							: this.t("views.pomodoro.status.longBreak");
+
+				if (state.inOvertime) {
+					typeText = `⚠️ ${typeText} (${this.t("views.pomodoro.status.overtime") || "Overtime"})`;
+				}
+
 				this.statusDisplay.textContent = typeText;
 				this.statusDisplay.className = `pomodoro-status pomodoro-view__status pomodoro-status-${state.currentSession.type} pomodoro-view__status--${state.currentSession.type}`;
 			} else if (state.currentSession && !state.isRunning) {
@@ -922,17 +939,37 @@ export class PomodoroView extends ItemView {
 		}
 
 		// Update button visibility
-		if (this.startButton && this.pauseButton && this.stopButton) {
+		if (this.startButton && this.pauseButton && this.stopButton && this.switchButton) {
+			const isManualMode = this.plugin.settings.pomodoroTimerMode === "manual";
+
 			if (state.isRunning) {
 				this.startButton.addClass("pomodoro-view__start-button--hidden");
 				this.pauseButton.removeClass("pomodoro-view__pause-button--hidden");
 				this.stopButton.removeClass("pomodoro-view__stop-button--hidden");
+
+				if (isManualMode && state.currentSession) {
+					this.switchButton.removeClass("pomodoro-view__switch-button--hidden");
+					this.switchButton.textContent = state.currentSession.type === "work" ?
+						this.t("views.pomodoro.buttons.startBreak") :
+						this.t("views.pomodoro.buttons.startWork");
+				} else {
+					this.switchButton.addClass("pomodoro-view__switch-button--hidden");
+				}
 			} else if (state.currentSession) {
 				// Paused
 				this.startButton.removeClass("pomodoro-view__start-button--hidden");
 				this.startButton.textContent = this.t("views.pomodoro.buttons.resume");
 				this.pauseButton.addClass("pomodoro-view__pause-button--hidden");
 				this.stopButton.removeClass("pomodoro-view__stop-button--hidden");
+
+				if (isManualMode) {
+					this.switchButton.removeClass("pomodoro-view__switch-button--hidden");
+					this.switchButton.textContent = state.currentSession.type === "work" ?
+						this.t("views.pomodoro.buttons.startBreak") :
+						this.t("views.pomodoro.buttons.startWork");
+				} else {
+					this.switchButton.addClass("pomodoro-view__switch-button--hidden");
+				}
 			} else {
 				// Idle - no active session
 				this.startButton.removeClass("pomodoro-view__start-button--hidden");
@@ -948,6 +985,7 @@ export class PomodoroView extends ItemView {
 
 				this.pauseButton.addClass("pomodoro-view__pause-button--hidden");
 				this.stopButton.addClass("pomodoro-view__stop-button--hidden");
+				this.switchButton.addClass("pomodoro-view__switch-button--hidden");
 			}
 		}
 
@@ -984,19 +1022,25 @@ export class PomodoroView extends ItemView {
 	}
 
 	private updateTimer(seconds: number) {
-		if (this.timerDisplay) {
-			// Ensure seconds is valid
-			const validSeconds = Math.max(0, Math.floor(seconds));
-			const minutes = Math.floor(validSeconds / 60);
-			const secs = validSeconds % 60;
-			this.timerDisplay.textContent = `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+		if (!this.timerDisplay) return;
 
-			// Update timer color based on time remaining
-			if (validSeconds <= 60 && validSeconds > 0) {
-				this.timerDisplay.addClass("pomodoro-view__timer-display--warning");
-			} else {
-				this.timerDisplay.removeClass("pomodoro-view__timer-display--warning");
-			}
+		// Check if in overtime (negative time)
+		const isOvertime = seconds < 0;
+		const absSeconds = Math.abs(seconds);
+
+		const minutes = Math.floor(absSeconds / 60);
+		const secs = absSeconds % 60;
+		const prefix = isOvertime ? "+" : "";
+
+		this.timerDisplay.textContent = `${prefix}${minutes.toString().padStart(2, "0")}:${secs
+			.toString()
+			.padStart(2, "0")}`;
+
+		// Add overtime class for styling
+		if (isOvertime) {
+			this.timerDisplay.addClass("pomodoro-timer__overtime");
+		} else {
+			this.timerDisplay.removeClass("pomodoro-timer__overtime");
 		}
 	}
 

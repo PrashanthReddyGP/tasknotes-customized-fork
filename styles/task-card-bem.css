@@ -13,23 +13,27 @@
 
     /* Spacing & Sizing - Refined spacing for better visual breathing room */
     padding: var(--tn-spacing-md) var(--tn-spacing-lg);
-    margin-bottom: 1px;
+    margin-bottom: var(--tn-spacing-sm);
 
     /* Visual Styling - Subtle depth with minimal shadow */
-    background-color: transparent;
-    border: none;
-    border-radius: var(--tn-radius-xs);
-    box-shadow: none;
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-top: 4px solid transparent;
+    border-radius: var(--tn-radius-sm);
+    box-shadow: var(--cs-elevation-1);
 
     /* Interactions & Accessibility - Smooth transitions */
-    transition: all var(--tn-transition-fast);
+    transition: all var(--tn-transition-normal);
     outline: none;
     role: listitem;
     tabindex: 0;
 }
 
 .tasknotes-plugin .task-card:hover {
-    background-color: var(--background-modifier-hover);
+    background-color: var(--background-primary);
+    box-shadow: var(--cs-elevation-3);
+    transform: translateY(-1px);
+    border-color: var(--background-modifier-border-focus);
 }
 
 /* Prevent parent hover when hovering over subtasks or blocking tasks */
@@ -39,9 +43,10 @@
 }
 
 .tasknotes-plugin .task-card:focus {
-    background-color: var(--background-modifier-hover);
-    outline: 2px solid var(--background-modifier-border-focus);
+    background-color: var(--background-primary);
+    outline: 2px solid var(--interactive-accent);
     outline-offset: -2px;
+    box-shadow: var(--cs-elevation-3), 0 0 0 2px var(--background-modifier-border-focus);
 }
 
 .tasknotes-plugin .task-card:focus:not(:focus-visible) {
@@ -52,20 +57,13 @@
     margin-bottom: 0;
 }
 
-/* Remove border radius for cleaner list appearance */
-.tasknotes-plugin .task-card:first-child,
-.tasknotes-plugin .task-card:last-child,
-.tasknotes-plugin .task-card:first-child:last-child {
-    border-radius: 0;
-}
-
 /* =================================================================
    TASKCARD ELEMENTS (BEM __element)
    ================================================================= */
 
 .tasknotes-plugin .task-card__main-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--tn-spacing-sm);
     width: 100%;
     position: relative;
@@ -85,6 +83,7 @@
     line-height: 1.4;
     color: var(--tn-text-normal);
     margin: 0;
+    padding-left: var(--tn-spacing-sm);
     word-wrap: break-word;
     word-break: break-word;
     white-space: normal;
@@ -256,34 +255,50 @@
 }
 
 .tasknotes-plugin .task-card__status-dot {
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
     flex-shrink: 0;
-    border: 2px solid color-mix(in srgb, var(--tn-border-color) 80%, transparent);
+    border: 2px solid var(--background-modifier-border);
     background-color: transparent;
-    transition: all var(--tn-transition-fast);
+    transition: all var(--tn-transition-normal);
     position: relative;
     box-shadow: none;
+    cursor: pointer;
+    margin-top: 1px;
 }
 
 .tasknotes-plugin .task-card__status-dot:hover {
-    background-color: color-mix(in srgb, var(--next-status-color, var(--tn-interactive-accent)) 30%, transparent);
-    border-color: var(--next-status-color, var(--tn-interactive-accent));
+    background-color: var(--interactive-accent);
+    border-color: var(--interactive-accent);
 }
 
-/* Completed status - filled circle with status color */
+/* Completed status - checkbox with checkmark */
 .tasknotes-plugin .task-card--completed > .task-card__main-row .task-card__status-dot {
-    background-color: var(--current-status-color, var(--tn-color-success));
-    border-color: var(--current-status-color, var(--tn-color-success));
+    background-color: transparent;
+    border-color: var(--interactive-accent);
     box-shadow: none;
     position: relative;
 }
 
+.tasknotes-plugin .task-card--completed > .task-card__main-row .task-card__status-dot::after {
+    content: '✓';
+    position: absolute;
+    color: var(--interactive-accent);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .tasknotes-plugin .task-card--completed > .task-card__main-row .task-card__status-dot:hover {
-    background-color: color-mix(in srgb, var(--next-status-color, var(--tn-interactive-accent)) 50%, var(--current-status-color, var(--tn-color-success)));
-    border-color: var(--next-status-color, var(--tn-interactive-accent));
+    background-color: transparent;
+    border-color: var(--interactive-accent-hover);
 }
 
 /* Completion animation - subtle pulse when task is completed */
@@ -308,35 +323,50 @@
 
 /* Status dot with icon mode - uses Lucide icons from theme */
 .tasknotes-plugin .task-card__status-dot--icon {
-    border: none;
+    border: 2px solid var(--background-modifier-border);
     background-color: transparent;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    border-radius: 3px;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
 }
 
 .tasknotes-plugin .task-card__status-dot--icon svg {
-    width: 18px;
-    height: 18px;
-    color: var(--current-status-color, var(--tn-text-muted));
-    stroke-width: 2;
+    width: 12px;
+    height: 12px;
+    color: var(--text-muted);
+    stroke-width: 3;
+}
+
+.tasknotes-plugin .task-card__status-dot--icon:hover {
+    border-color: var(--interactive-accent);
+    background-color: var(--interactive-accent);
 }
 
 .tasknotes-plugin .task-card__status-dot--icon:hover svg {
-    color: var(--next-status-color, var(--tn-interactive-accent));
+    color: white;
 }
 
 /* Completed state for icon mode */
 .tasknotes-plugin .task-card--completed > .task-card__main-row .task-card__status-dot--icon {
     background-color: transparent;
+    border-color: var(--interactive-accent);
 }
 
 .tasknotes-plugin .task-card--completed > .task-card__main-row .task-card__status-dot--icon svg {
-    color: var(--current-status-color, var(--tn-color-success));
+    color: white;
+}
+
+.tasknotes-plugin .task-card--completed > .task-card__main-row .task-card__status-dot--icon:hover {
+    background-color: transparent;
+    border-color: var(--interactive-accent-hover);
 }
 
 .tasknotes-plugin .task-card--completed > .task-card__main-row .task-card__status-dot--icon:hover svg {
-    color: var(--next-status-color, var(--tn-interactive-accent));
+    color: white;
 }
 
 /* =================================================================
@@ -828,39 +858,42 @@
     color: var(--text-muted);
 }
 
-/* Priority indicators - Use user's priority settings */
+/* Priority indicators - Move to top border instead of inline dot */
 .tasknotes-plugin .task-card__priority-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    background-color: var(--priority-color, transparent);
-    margin: 0 var(--tn-spacing-xs);
+    display: none;
 }
 
-/* Dynamic priority colors using CSS variables set by PriorityManager */
-/* Use child combinator (>) to prevent subtasks from inheriting parent priority styling */
-.tasknotes-plugin .task-card[data-priority] > .task-card__main-row .task-card__priority-dot {
-    background-color: var(--current-priority-color, var(--tn-text-muted));
+/* Priority colors - Applied via top border based on data attributes and classes */
+/* The plugin sets --priority-{value}-color variables based on settings */
+
+/* Dynamic priority colors using data attribute with custom priority values */
+.tasknotes-plugin .task-card[data-priority] {
+    border-top-color: var(--priority-color, transparent);
 }
 
-/* Fallback priority colors using existing system */
-/* Use child combinator (>) to prevent subtasks from inheriting parent priority styling */
-.tasknotes-plugin .task-card--priority-high > .task-card__main-row .task-card__priority-dot {
-    background-color: var(--priority-high-color, var(--tn-color-error));
+/* Standard priority classes - these are reliably set by the plugin */
+.tasknotes-plugin .task-card--priority-highest {
+    border-top-color: var(--priority-highest-color, #ff0000);
 }
 
-.tasknotes-plugin .task-card--priority-medium > .task-card__main-row .task-card__priority-dot {
-    background-color: var(--priority-medium-color, var(--tn-interactive-accent));
+.tasknotes-plugin .task-card--priority-high {
+    border-top-color: var(--priority-high-color, #ff6b6b);
 }
 
-.tasknotes-plugin .task-card--priority-normal > .task-card__main-row .task-card__priority-dot {
-    background-color: var(--priority-normal-color, var(--tn-interactive-accent));
+.tasknotes-plugin .task-card--priority-medium {
+    border-top-color: var(--priority-medium-color, #ffd166);
 }
 
-.tasknotes-plugin .task-card--priority-low > .task-card__main-row .task-card__priority-dot {
-    background-color: var(--priority-low-color, var(--tn-text-muted));
+.tasknotes-plugin .task-card--priority-normal {
+    border-top-color: var(--priority-normal-color, #06aed5);
+}
+
+.tasknotes-plugin .task-card--priority-low {
+    border-top-color: var(--priority-low-color, #087e8b);
+}
+
+.tasknotes-plugin .task-card--priority-none {
+    border-top-color: var(--priority-none-color, var(--text-muted));
 }
 
 /* Status colors - Use dynamic status colors from user settings */

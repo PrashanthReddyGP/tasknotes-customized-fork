@@ -19,7 +19,7 @@ export const pt: TranslationTree = {
 			de: "Alemão",
 			es: "Espanhol",
 			ja: "Japonês",
-            pt: "Português (Brasil)",
+			pt: "Português (Brasil)",
 			ko: "Coreano",
 		},
 		weekdays: {
@@ -188,10 +188,10 @@ export const pt: TranslationTree = {
 				customDays: "Visualização de {count} dias"
 			},
 			settings: {
-		header: {
-			documentation: "Documentation",
-			documentationUrl: "https://tasknotes.dev",
-		},
+				header: {
+					documentation: "Documentation",
+					documentationUrl: "https://tasknotes.dev",
+				},
 				groups: {
 					dateNavigation: "Navegação de Data",
 					events: "Eventos",
@@ -320,52 +320,77 @@ export const pt: TranslationTree = {
 		},
 		pomodoroStats: {
 			title: "Estatísticas Pomodoro",
-			heading: "Estatísticas Pomodoro",
+			heading: "ESTATÍSTICAS POMODORO",
 			refresh: "Atualizar",
 			sections: {
 				overview: "Visão Geral",
 				today: "Hoje",
-				week: "Esta semana",
-				allTime: "Todo o período",
-				recent: "Sessões recentes"
+				yesterday: "Ontem",
+				week: "Esta Semana",
+				month: "Este Mês",
+				allTime: "Todo o Tempo",
+				recent: "SESSÕES RECENTES",
 			},
 			overviewCards: {
 				todayPomos: {
 					label: "Pomos de Hoje",
 					change: {
 						more: "{count} a mais que ontem",
-						less: "{count} a menos que ontem"
-					}
+						less: "{count} a menos que ontem",
+					},
 				},
 				totalPomos: {
-					label: "Total de Pomos"
+					label: "Pomos Totais",
+					sub: "Vida Toda",
 				},
 				todayFocus: {
 					label: "Foco de Hoje",
 					change: {
 						more: "{duration} a mais que ontem",
-						less: "{duration} a menos que ontem"
-					}
+						less: "{duration} a menos que ontem",
+					},
 				},
 				totalFocus: {
-					label: "Duração Total de Foco"
-				}
+					label: "Duração Total de Foco",
+					sub: "Incl. geradas",
+				},
 			},
 			stats: {
 				pomodoros: "Pomodoros",
+				breaks: "Intervalos",
+				interrupts: "Interrupções",
 				streak: "Sequência",
-				minutes: "Minutos",
-				average: "Duração média",
-				completion: "Conclusão"
+				minutes: "min",
+				average: "Duração Média",
+				completion: "Concluído",
+				table: {
+					headers: {
+						count: "CONTAGEM",
+						duration: "DURAÇÃO",
+						overtime: "HORAS EXTRAS",
+						avgLen: "DUR. MÉDIA",
+						done: "% CONCLUÍDO",
+						shortLong: "CURTO / LONGO",
+						rate: "TAXA",
+						total: "TOTAL",
+						reserved: "PRESERVADO",
+					},
+				},
 			},
 			recents: {
-				empty: "Nenhuma sessão registrada ainda",
+				empty: "Nenhuma sessão gravada ainda",
 				duration: "{minutes} min",
+				subInfo: "{overtime} Extra | {paused} Pausado",
 				status: {
-					completed: "Concluído",
-					interrupted: "Interrompido"
-				}
-			}
+					completed: "CONCLUÍDO",
+					interrupted: "INTERROMPIDO",
+				},
+				types: {
+					work: "Trabalho",
+					shortBreak: "Pausa Curta",
+					longBreak: "Pausa Longa",
+				},
+			},
 		},
 		stats: {
 			title: "Estatísticas",
@@ -2037,7 +2062,7 @@ export const pt: TranslationTree = {
 	notices: {
 		languageChanged: "Idioma alterado para {language}.",
 		exportTasksFailed: "Falha ao exportar tarefas como arquivo ICS",
-        // ICS Event Info Modal notices
+		// ICS Event Info Modal notices
 		icsNoteCreatedSuccess: "Nota criada com sucesso",
 		icsCreationModalOpenFailed: "Falha ao abrir modal de criação",
 		icsNoteLinkSuccess: 'Nota "{fileName}" vinculada ao evento ICS',
@@ -2045,7 +2070,7 @@ export const pt: TranslationTree = {
 		icsRelatedItemsRefreshed: "Notas relacionadas atualizadas",
 		icsFileNotFound: "Arquivo não encontrado ou inválido",
 		icsFileOpenFailed: "Falha ao abrir arquivo",
-        // Timeblock Info Modal notices
+		// Timeblock Info Modal notices
 		timeblockAttachmentExists: '"{fileName}" já está anexado',
 		timeblockAttachmentAdded: '"{fileName}" adicionado como anexo',
 		timeblockAttachmentRemoved: '"{fileName}" removido dos anexos',
@@ -2056,11 +2081,11 @@ export const pt: TranslationTree = {
 		timeblockDeletedSuccess: 'Bloco de tempo "{title}" excluído com sucesso',
 		timeblockDeleteFailed: "Falha ao excluir bloco de tempo. Verifique o console para detalhes.",
 		// Timeblock Creation Modal notices
-        timeblockRequiredFieldsMissing: "Por favor, preencha todos os campos obrigatórios",
+		timeblockRequiredFieldsMissing: "Por favor, preencha todos os campos obrigatórios",
 		// Agenda View notices
-        agendaLoadingFailed: "Erro ao carregar agenda. Por favor, tente atualizar.",
+		agendaLoadingFailed: "Erro ao carregar agenda. Por favor, tente atualizar.",
 		// Stats View notices
-        statsLoadingFailed: "Erro ao carregar detalhes do projeto."
+		statsLoadingFailed: "Erro ao carregar detalhes do projeto."
 	},
 	commands: {
 		openCalendarView: "Abrir visualização de mini calendário",

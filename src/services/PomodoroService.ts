@@ -97,7 +97,9 @@ export class PomodoroService {
 				this.state = data.pomodoroState;
 
 				// Validate loaded state
-				this.state.timeRemaining = Math.max(0, this.state.timeRemaining || 0);
+				if (this.plugin.settings.pomodoroTimerMode === "auto") {
+					this.state.timeRemaining = Math.max(0, this.state.timeRemaining || 0);
+				}
 
 				// Clear any stale session from previous day
 				const today = formatDateForStorage(getTodayLocal());
@@ -329,7 +331,7 @@ export class PomodoroService {
 		if (this.state.currentSession && this.state.currentSession.activePeriods.length > 0) {
 			const currentPeriod =
 				this.state.currentSession.activePeriods[
-					this.state.currentSession.activePeriods.length - 1
+				this.state.currentSession.activePeriods.length - 1
 				];
 			if (!currentPeriod.endTime) {
 				currentPeriod.endTime = getCurrentTimestamp();
@@ -414,22 +416,32 @@ export class PomodoroService {
 		this.stopTimer();
 
 		if (this.state.currentSession) {
-			this.state.currentSession.interrupted = true;
-			this.state.currentSession.endTime = getCurrentTimestamp();
-
-			// End the current active period if it's still running
-			if (this.state.currentSession.activePeriods.length > 0) {
-				const currentPeriod =
-					this.state.currentSession.activePeriods[
-						this.state.currentSession.activePeriods.length - 1
-					];
-				if (!currentPeriod.endTime) {
-					currentPeriod.endTime = getCurrentTimestamp();
+			const currentSession = this.state.currentSession;
+			// Finalize the last active period before calculating duration
+			if (currentSession.activePeriods.length > 0) {
+				const lastPeriod = currentSession.activePeriods[currentSession.activePeriods.length - 1];
+				if (!lastPeriod.endTime) {
+					lastPeriod.endTime = getCurrentTimestamp();
 				}
 			}
+			currentSession.endTime = getCurrentTimestamp();
 
-			// Add interrupted session to history
-			await this.addSessionToHistory(this.state.currentSession);
+			const actualDuration = getSessionDuration(currentSession);
+			const reachedTarget = actualDuration >= currentSession.plannedDuration;
+
+			if (reachedTarget) {
+				// Sessions that reached target (including overtime) should be marked completed
+				currentSession.completed = true;
+				currentSession.interrupted = false;
+			} else {
+				// Stopped before reaching target
+				currentSession.completed = false;
+				currentSession.interrupted = true;
+			}
+
+
+			// Add to history
+			await this.addSessionToHistory(currentSession);
 		}
 
 		this.plugin.emitter.trigger(EVENT_POMODORO_INTERRUPT, {
@@ -467,6 +479,7 @@ export class PomodoroService {
 
 		this.state.currentSession = undefined;
 		this.state.isRunning = false;
+		this.state.inOvertime = false;
 		// Reset to default work duration
 		this.state.timeRemaining = this.plugin.settings.pomodoroWorkDuration * 60;
 
@@ -480,6 +493,87 @@ export class PomodoroService {
 
 		if (wasRunning) {
 			new Notice(this.translate("services.pomodoro.notices.stoppedAndReset"));
+		}
+	}
+
+	/**
+	 * Switch to next session type (work -> break -> work)
+	 * Used in manual mode to manually transition sessions
+	 */
+	async switchSession() {
+		if (!this.state.currentSession) {
+			return;
+		}
+
+		const currentSession = this.state.currentSession;
+		const wasInOvertime = this.state.inOvertime && currentSession.overtime;
+
+		// Stop timer worker first
+		this.stopTimer();
+
+		// Close out the current session periods
+		if (currentSession.activePeriods.length > 0) {
+			const currentPeriod =
+				currentSession.activePeriods[currentSession.activePeriods.length - 1];
+			if (!currentPeriod.endTime) {
+				currentPeriod.endTime = getCurrentTimestamp();
+			}
+		}
+
+		currentSession.endTime = getCurrentTimestamp();
+
+		// Determine if session was completed or interrupted based on actual duration
+		const actualDuration = getSessionDuration(currentSession);
+		const reachedTarget = actualDuration >= currentSession.plannedDuration;
+
+		currentSession.completed = reachedTarget;
+		currentSession.interrupted = !reachedTarget;
+
+		// Calculate overtime if applicable
+		if (reachedTarget && actualDuration > currentSession.plannedDuration) {
+			currentSession.overtime = true;
+			currentSession.overtimeDuration = actualDuration - currentSession.plannedDuration;
+		}
+
+		// Add to history
+		await this.addSessionToHistory(currentSession);
+
+		// Clear overtime state
+		this.state.inOvertime = false;
+		this.state.isRunning = false;
+
+		// Determine next session type
+		let nextType: "work" | "short-break" | "long-break";
+		if (currentSession.type === "work") {
+			// Check if it's time for long break
+			try {
+				const stats = await this.getTodayStats();
+				const totalCompleted = stats.pomodorosCompleted + 1;
+				const shouldTakeLongBreak =
+					totalCompleted % this.plugin.settings.pomodoroLongBreakInterval === 0;
+				nextType = shouldTakeLongBreak ? "long-break" : "short-break";
+			} catch (error) {
+				console.error("Failed to calculate break type:", error);
+				nextType = "short-break";
+			}
+		} else {
+			nextType = "work";
+		}
+
+		// Clear current session reference
+		this.state.currentSession = undefined;
+
+		// Start next session
+		if (nextType === "work") {
+			// For work session, check if we should auto-start with a task
+			const task = await this.getAutoStartTask();
+			if (task) {
+				await this.startPomodoro(task);
+			} else {
+				await this.startPomodoro();
+			}
+		} else {
+			await this.startBreak(nextType === "long-break");
 		}
 	}
 
@@ -498,7 +592,7 @@ export class PomodoroService {
 		this.timerWorker.postMessage({ command: "stop" });
 	}
 
-	private resumeTimer() {
+	private async resumeTimer() {
 		if (this.state.currentSession && this.state.currentSession.startTime) {
 			const startTime = new Date(this.state.currentSession.startTime).getTime();
 			const now = Date.now();
@@ -526,16 +620,58 @@ export class PomodoroService {
 					totalActiveSeconds += Math.floor((end - start) / 1000);
 				}
 
-				// Calculate time remaining based on actual active time
-				this.state.timeRemaining = Math.max(0, totalDuration - totalActiveSeconds);
+				// Calculate time remaining based on actual active time - allow negative for overtime
+				this.state.timeRemaining = totalDuration - totalActiveSeconds;
 			}
 
 			if (this.state.timeRemaining > 0 && this.state.isRunning) {
 				this.startTimer();
 			} else if (this.state.timeRemaining <= 0) {
 				// Timer would have completed while app was closed
-				this.completePomodoro();
+				if (this.plugin.settings.pomodoroTimerMode === "manual" && this.state.isRunning) {
+					// In manual mode, start the timer and then notify (it will keep ticking negative)
+					this.startTimer();
+					await this.completePomodoro();
+				} else {
+					await this.completePomodoro();
+				}
 			}
+		}
+	}
+
+	/**
+	 * Show completion notification (sound + system notification)
+	 * Used by both auto and manual modes
+	 */
+	private async showCompletionNotification(session: PomodoroSession): Promise<void> {
+		// Determine next session type for messaging
+		let shouldTakeLongBreak = false;
+		if (session.type === "work") {
+			try {
+				const stats = await this.getTodayStats();
+				const totalCompleted = stats.pomodorosCompleted + 1;
+				shouldTakeLongBreak =
+					totalCompleted % this.plugin.settings.pomodoroLongBreakInterval === 0;
+			} catch (error) {
+				console.error("Failed to calculate break type:", error);
+			}
+		}
+
+		// Show notification
+		if (this.plugin.settings.pomodoroNotifications) {
+			const message =
+				session.type === "work" ? `🍅 Pomodoro completed!` : "☕ Break completed!";
+			const body =
+				session.type === "work"
+					? `Time for a ${shouldTakeLongBreak ? "long break 💤" : "short break ☕"}`
+					: "Ready for the next pomodoro?";
+
+			new Notification(message, { body });
+		}
+
+		// Play sound if enabled
+		if (this.plugin.settings.pomodoroSoundEnabled) {
+			this.playCompletionSound();
 		}
 	}
 
@@ -608,6 +744,49 @@ export class PomodoroService {
 	}
 
 	private async completePomodoro() {
+		// Check timer mode setting
+		const isManualMode = this.plugin.settings.pomodoroTimerMode === "manual";
+
+		if (isManualMode) {
+			// Manual mode: Alert user but keep timer running into overtime
+			await this.handleManualModeCompletion();
+		} else {
+			// Auto mode: Existing behavior (stop & switch)
+			await this.handleAutoModeCompletion();
+		}
+	}
+
+	/**
+	 * Handle pomodoro completion in manual mode - timer continues into overtime
+	 */
+	private async handleManualModeCompletion(): Promise<void> {
+		if (!this.state.currentSession) return;
+
+		const session = this.state.currentSession;
+
+		// Mark as in overtime
+		this.state.inOvertime = true;
+		session.overtime = true;
+
+		// Show completion alert (notification + sound)
+		await this.showCompletionNotification(session);
+
+		// DON'T stop timer - it keeps running into negative timeRemaining
+		// This represents overtime minutes
+
+		await this.saveState();
+
+		// Emit overtime event for UI updates
+		this.plugin.emitter.trigger("pomodoro-overtime", {
+			session,
+			plannedDuration: session.plannedDuration,
+		});
+	}
+
+	/**
+	 * Handle pomodoro completion in auto mode - stop timer and auto-switch
+	 */
+	private async handleAutoModeCompletion(): Promise<void> {
 		this.stopTimer();
 
 		if (!this.state.currentSession) {
@@ -792,7 +971,7 @@ export class PomodoroService {
 			// Clean up audio context after sounds complete
 			const cleanupTimeout = setTimeout(() => {
 				this.activeAudioContexts.delete(audioContext);
-				audioContext.close().catch(() => {});
+				audioContext.close().catch(() => { });
 			}, 300);
 			this.cleanupTimeouts.add(cleanupTimeout as unknown as number);
 		} catch (error) {
@@ -982,6 +1161,7 @@ export class PomodoroService {
 			type: session.type,
 			taskPath: session.taskPath,
 			completed: session.completed && !session.interrupted,
+			interrupted: session.interrupted, // Explicitly track interruptions
 			activePeriods: session.activePeriods.slice(), // Copy the active periods array
 		};
 
@@ -1000,6 +1180,7 @@ export class PomodoroService {
 		}
 	}
 
+
 	async getStatsForDate(date: Date): Promise<PomodoroHistoryStats> {
 		const dateStr = formatDateForStorage(date);
 		const history = await this.getSessionHistory();
@@ -1010,9 +1191,10 @@ export class PomodoroService {
 			return sessionDate === dateStr;
 		});
 
-		// Calculate stats for work sessions only
+		// Calculate stats for work sessions
 		const workSessions = dayHistory.filter((session) => session.type === "work");
 		const completedWork = workSessions.filter((session) => session.completed);
+		const interruptedWork = workSessions.filter((session) => session.interrupted);
 
 		// Calculate current streak (consecutive completed work sessions from latest backwards)
 		let currentStreak = 0;
@@ -1033,14 +1215,53 @@ export class PomodoroService {
 		const completionRate =
 			workSessions.length > 0 ? (completedWork.length / workSessions.length) * 100 : 0;
 
+		// Calculate break statistics
+		const shortBreaks = dayHistory.filter((session) => session.type === "short-break");
+		const longBreaks = dayHistory.filter((session) => session.type === "long-break");
+		const completedShortBreaks = shortBreaks.filter((session) => session.completed);
+		const completedLongBreaks = longBreaks.filter((session) => session.completed);
+
+		const totalBreakMinutes =
+			completedShortBreaks.reduce((sum, session) => sum + getSessionDuration(session), 0) +
+			completedLongBreaks.reduce((sum, session) => sum + getSessionDuration(session), 0);
+
+		const allBreaks = [...shortBreaks, ...longBreaks];
+		const breakCompletionRate =
+			allBreaks.length > 0
+				? ((completedShortBreaks.length + completedLongBreaks.length) / allBreaks.length) *
+				100
+				: 0;
+
+		// Calculate interruption statistics
+		const allSessions = dayHistory;
+		const totalInterrupted = allSessions.filter((session) => session.interrupted).length;
+		const interruptionRate =
+			allSessions.length > 0 ? (totalInterrupted / allSessions.length) * 100 : 0;
+
+		// Time spent in interrupted sessions (not discarded!)
+		const timeSpentInInterrupted = interruptedWork.reduce(
+			(sum, session) => sum + getSessionDuration(session),
+			0
+		);
+
 		return {
 			pomodorosCompleted: completedWork.length,
 			currentStreak,
 			totalMinutes,
 			averageSessionLength: Math.round(averageSessionLength),
 			completionRate: Math.round(completionRate),
+			// Break statistics
+			totalBreakMinutes,
+			shortBreaksCompleted: completedShortBreaks.length,
+			longBreaksCompleted: completedLongBreaks.length,
+			breakCompletionRate: Math.round(breakCompletionRate),
+			// Interruption statistics
+			totalInterrupted,
+			interruptionRate: Math.round(interruptionRate),
+			timeSpentInInterrupted,
 		};
 	}
+
 
 	async getTodayStats(): Promise<PomodoroHistoryStats> {
 		// Use UTC-anchored today for consistent timezone handling
@@ -1061,7 +1282,7 @@ export class PomodoroService {
 		this.cleanupTimeouts.clear();
 		for (const audioContext of this.activeAudioContexts) {
 			if (audioContext.state !== "closed") {
-				audioContext.close().catch(() => {});
+				audioContext.close().catch(() => { });
 			}
 		}
 		this.activeAudioContexts.clear();

@@ -188,10 +188,10 @@ export const es: TranslationTree = {
 				customDays: "Vista de {count} días",
 			},
 			settings: {
-		header: {
-			documentation: "Documentation",
-			documentationUrl: "https://tasknotes.dev",
-		},
+				header: {
+					documentation: "Documentation",
+					documentationUrl: "https://tasknotes.dev",
+				},
 				groups: {
 					dateNavigation: "Navegación por fecha",
 					events: "Eventos",
@@ -298,6 +298,7 @@ export const es: TranslationTree = {
 					long: "largo",
 				},
 				breakComplete: "¡Descanso completo! ¿Listo para el próximo pomodoro?",
+				overtime: "Tiempo extra",
 			},
 			buttons: {
 				start: "Iniciar",
@@ -311,6 +312,8 @@ export const es: TranslationTree = {
 				changeTask: "Cambiar tarea...",
 				clearTask: "Quitar tarea",
 				selectDifferentTask: "Seleccionar una tarea diferente",
+				startBreak: "Iniciar descanso",
+				startWork: "Iniciar trabajo",
 			},
 			notices: {
 				noTasks: "No se encontraron tareas no archivadas. Crea algunas tareas primero.",
@@ -319,15 +322,17 @@ export const es: TranslationTree = {
 			statsLabel: "completadas hoy",
 		},
 		pomodoroStats: {
-			title: "Estadísticas de Pomodoro",
-			heading: "Estadísticas de Pomodoro",
+			title: "Estadísticas Pomodoro",
+			heading: "ESTADÍSTICAS POMODORO",
 			refresh: "Actualizar",
 			sections: {
 				overview: "Resumen",
 				today: "Hoy",
+				yesterday: "Ayer",
 				week: "Esta semana",
+				month: "Este mes",
 				allTime: "Todo el tiempo",
-				recent: "Sesiones recientes",
+				recent: "SESIONES RECIENTES",
 			},
 			overviewCards: {
 				todayPomos: {
@@ -339,6 +344,7 @@ export const es: TranslationTree = {
 				},
 				totalPomos: {
 					label: "Pomos totales",
+					sub: "De por vida",
 				},
 				todayFocus: {
 					label: "Enfoque de hoy",
@@ -349,21 +355,43 @@ export const es: TranslationTree = {
 				},
 				totalFocus: {
 					label: "Duración total de enfoque",
+					sub: "Incl. generados",
 				},
 			},
 			stats: {
 				pomodoros: "Pomodoros",
+				breaks: "Descansos",
+				interrupts: "Interrupciones",
 				streak: "Racha",
-				minutes: "Minutos",
-				average: "Duración promedio",
-				completion: "Finalización",
+				minutes: "min",
+				average: "Longitud media",
+				completion: "Hecho",
+				table: {
+					headers: {
+						count: "CANTIDAD",
+						duration: "DURACIÓN",
+						overtime: "HORAS EXTRA",
+						avgLen: "LUA MEDIA",
+						done: "% HECHO",
+						shortLong: "CORTO / LARGO",
+						rate: "TASA",
+						total: "TOTAL",
+						reserved: "PRESERVADO",
+					},
+				},
 			},
 			recents: {
-				empty: "Aún no se han registrado sesiones",
+				empty: "Aún no hay sesiones registradas",
 				duration: "{minutes} min",
+				subInfo: "{overtime} Extra | {paused} Pausado",
 				status: {
-					completed: "Completado",
-					interrupted: "Interrumpido",
+					completed: "COMPLETADO",
+					interrupted: "INTERRUMPIDO",
+				},
+				types: {
+					work: "Trabajo",
+					shortBreak: "Descanso Corto",
+					longBreak: "Descanso Largo",
 				},
 			},
 		},

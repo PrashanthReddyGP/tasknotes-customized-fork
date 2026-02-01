@@ -188,10 +188,10 @@ export const ru: TranslationTree = {
 				customDays: "Вид на {count} дней",
 			},
 			settings: {
-		header: {
-			documentation: "Documentation",
-			documentationUrl: "https://tasknotes.dev",
-		},
+				header: {
+					documentation: "Documentation",
+					documentationUrl: "https://tasknotes.dev",
+				},
 				groups: {
 					dateNavigation: "Навигация по датам",
 					events: "События",
@@ -319,51 +319,76 @@ export const ru: TranslationTree = {
 			statsLabel: "завершено сегодня",
 		},
 		pomodoroStats: {
-			title: "Статистика помодоро",
-			heading: "Статистика помодоро",
+			title: "Статистика Помодоро",
+			heading: "СТАТИСТИКА ПОМОДОРО",
 			refresh: "Обновить",
 			sections: {
 				overview: "Обзор",
 				today: "Сегодня",
+				yesterday: "Вчера",
 				week: "Эта неделя",
+				month: "Этот месяц",
 				allTime: "За все время",
-				recent: "Последние сессии",
+				recent: "НЕДАВНИЕ СЕАНСЫ",
 			},
 			overviewCards: {
 				todayPomos: {
 					label: "Помодоро сегодня",
 					change: {
-						more: "на {count} больше чем вчера",
-						less: "на {count} меньше чем вчера",
+						more: "на {count} больше, чем вчера",
+						less: "на {count} меньше, чем вчера",
 					},
 				},
 				totalPomos: {
 					label: "Всего помодоро",
+					sub: "За все время",
 				},
 				todayFocus: {
 					label: "Фокус сегодня",
 					change: {
-						more: "на {duration} больше чем вчера",
-						less: "на {duration} меньше чем вчера",
+						more: "на {duration} больше, чем вчера",
+						less: "на {duration} меньше, чем вчера",
 					},
 				},
 				totalFocus: {
 					label: "Общее время фокуса",
+					sub: "Вкл. сгенерированные",
 				},
 			},
 			stats: {
 				pomodoros: "Помодоро",
+				breaks: "Перерывы",
+				interrupts: "Прерывания",
 				streak: "Серия",
-				minutes: "Минуты",
-				average: "Средняя длина",
-				completion: "Завершение",
+				minutes: "мин",
+				average: "Средняя прод.",
+				completion: "Готово",
+				table: {
+					headers: {
+						count: "КОЛ-ВО",
+						duration: "ДЛИТ-СТЬ",
+						overtime: "ОТКЛОНЕНИЕ",
+						avgLen: "СР. ДЛИНА",
+						done: "% ГОТОВО",
+						shortLong: "КОР. / ДЛ.",
+						rate: "ЧАСТОТА",
+						total: "ВСЕГО",
+						reserved: "СОХРАНЕНО",
+					},
+				},
 			},
 			recents: {
-				empty: "Сессии еще не записаны",
+				empty: "Сеансы еще не записаны",
 				duration: "{minutes} мин",
+				subInfo: "{overtime} Сверх | {paused} Пауза",
 				status: {
-					completed: "Завершено",
-					interrupted: "Прервано",
+					completed: "ЗАВЕРШЕНО",
+					interrupted: "ПРЕРВАНО",
+				},
+				types: {
+					work: "Работа",
+					shortBreak: "Короткий перерыв",
+					longBreak: "Длинный перерыв",
 				},
 			},
 		},

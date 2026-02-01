@@ -1,0 +1,49 @@
+/* Base styling for ALL list events - completely independent from calendar views */
+.fc-list-event {
+    /* Reset any inherited styling from calendar views */
+    opacity: 1 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Consistent light hover background for ALL list events */
+.fc-list-event:hover {
+    background-color: var(--background-modifier-hover) !important;
+}
+
+/* Fix time element color on hover in list view */
+.fc-list-event:hover .fc-list-event-time {
+    color: inherit !important;
+    background-color: transparent !important;
+}
+
+.fc-list-event .fc-list-event-time {
+    /* Consistent time styling for all events */
+    font-size: inherit !important;
+    color: inherit !important;
+    font-weight: inherit !important;
+    vertical-align: top;
+}
+
+.fc-list-event .fc-list-event-title {
+    /* Base title styling - clean and consistent */
+    padding: 8px 12px;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    color: inherit !important;
+    display: table-cell;
+    vertical-align: top;
+}
+
+
+.fc-list-event .fc-list-event-dot {
+    /* Standard dot styling for all events */
+    border: inherit !important;
+    background: inherit !important;
+}

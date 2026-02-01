@@ -188,10 +188,10 @@ export const de: TranslationTree = {
 				customDays: "{count}-Tage-Ansicht",
 			},
 			settings: {
-		header: {
-			documentation: "Documentation",
-			documentationUrl: "https://tasknotes.dev",
-		},
+				header: {
+					documentation: "Documentation",
+					documentationUrl: "https://tasknotes.dev",
+				},
 				groups: {
 					dateNavigation: "Datumsnavigation",
 					events: "Ereignisse",
@@ -298,6 +298,7 @@ export const de: TranslationTree = {
 					long: "lange",
 				},
 				breakComplete: "Pause beendet! Bereit für den nächsten Pomodoro?",
+				overtime: "Überstunden",
 			},
 			buttons: {
 				start: "Starten",
@@ -311,6 +312,8 @@ export const de: TranslationTree = {
 				changeTask: "Aufgabe wechseln...",
 				clearTask: "Aufgabe entfernen",
 				selectDifferentTask: "Andere Aufgabe wählen",
+				startBreak: "Pause starten",
+				startWork: "Arbeit starten",
 			},
 			notices: {
 				noTasks: "Keine unarchivierte Aufgaben gefunden. Erstelle zuerst einige Aufgaben.",
@@ -320,14 +323,16 @@ export const de: TranslationTree = {
 		},
 		pomodoroStats: {
 			title: "Pomodoro-Statistiken",
-			heading: "Pomodoro-Statistiken",
+			heading: "POMODORO-STATS",
 			refresh: "Aktualisieren",
 			sections: {
-				overview: "Überblick",
+				overview: "Übersicht",
 				today: "Heute",
+				yesterday: "Gestern",
 				week: "Diese Woche",
-				allTime: "Gesamt",
-				recent: "Aktuelle Sitzungen",
+				month: "Diesen Monat",
+				allTime: "Gesamtzeit",
+				recent: "LETZTE SITZUNGEN",
 			},
 			overviewCards: {
 				todayPomos: {
@@ -338,7 +343,8 @@ export const de: TranslationTree = {
 					},
 				},
 				totalPomos: {
-					label: "Pomos insgesamt",
+					label: "Pomos gesamt",
+					sub: "Lebenszeit",
 				},
 				todayFocus: {
 					label: "Heutiger Fokus",
@@ -348,22 +354,44 @@ export const de: TranslationTree = {
 					},
 				},
 				totalFocus: {
-					label: "Fokuszeit insgesamt",
+					label: "Gesamtfokusdauer",
+					sub: "Inkl. generierter",
 				},
 			},
 			stats: {
 				pomodoros: "Pomodoros",
+				breaks: "Pausen",
+				interrupts: "Unterbrechungen",
 				streak: "Serie",
-				minutes: "Minuten",
+				minutes: "Min.",
 				average: "Durchschn. Länge",
-				completion: "Abschluss",
+				completion: "Erledigt",
+				table: {
+					headers: {
+						count: "ANZAHL",
+						duration: "DAUER",
+						overtime: "ÜBERSTUNDEN",
+						avgLen: "DCHSN. LÄNGE",
+						done: "% ERLEDIGT",
+						shortLong: "KURZ / LANG",
+						rate: "RATE",
+						total: "GESAMT",
+						reserved: "RESERVIERT",
+					},
+				},
 			},
 			recents: {
 				empty: "Noch keine Sitzungen aufgezeichnet",
-				duration: "{minutes} Min",
+				duration: "{minutes} Min.",
+				subInfo: "{overtime} Überst. | {paused} Pausiert",
 				status: {
-					completed: "Abgeschlossen",
-					interrupted: "Unterbrochen",
+					completed: "ABGESCHLOSSEN",
+					interrupted: "UNTERBROCHEN",
+				},
+				types: {
+					work: "Arbeit",
+					shortBreak: "Kurze Pause",
+					longBreak: "Lange Pause",
 				},
 			},
 		},

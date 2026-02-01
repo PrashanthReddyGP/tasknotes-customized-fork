@@ -287,6 +287,7 @@ export const DEFAULT_SETTINGS: TaskNotesSettings = {
 	pomodoroSoundVolume: 50,
 	pomodoroStorageLocation: "plugin",
 	pomodoroMobileSidebar: "tab",
+	pomodoroTimerMode: "auto", // Default to auto mode (current behavior)
 	// Editor defaults
 	enableTaskLinkOverlay: true,
 	disableOverlayOnAlias: false,

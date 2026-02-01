@@ -9,6 +9,7 @@
 		"build:test": "npm run build && node copy-files.mjs",
 		"copy-files": "node copy-files.mjs",
 		"build-css": "node build-css.mjs",
+		"debug-css": "node scripts/backport-css.js",
 		"e2e": "playwright test",
 		"e2e:docs": "playwright test e2e/docs-screenshots.spec.ts",
 		"e2e:docs:copy": "mkdir -p media/docs && cp test-results/docs/*.png media/docs/",
