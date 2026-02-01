@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Setting } from "obsidian";
+import { ItemView, WorkspaceLeaf, Setting, setIcon, Notice } from "obsidian";
 import {
 	format,
 	startOfWeek,
@@ -27,6 +27,7 @@ export class PomodoroStatsView extends ItemView {
 
 	// State
 	private selectedTab: "today" | "yesterday" | "week" | "month" | "all" = "today";
+	private currentFilteredHistory: PomodoroSessionHistory[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: TaskNotesPlugin) {
 		super(leaf);
@@ -127,10 +128,29 @@ export class PomodoroStatsView extends ItemView {
 		const recentSection = container.createDiv({
 			cls: "pomodoro-stats-view__section pomodoro-stats-view__section--recent",
 		});
-		recentSection.createDiv({
+
+		// Recent sessions header with copy button
+		const recentHeader = recentSection.createDiv({
+			cls: "pomodoro-stats-section-header",
+			attr: { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;" }
+		});
+
+		recentHeader.createDiv({
 			cls: "pomodoro-stats-section-title",
 			text: this.t("views.pomodoroStats.sections.recent"),
+			attr: { style: "margin-bottom: 0;" }
 		});
+
+		const copyButton = recentHeader.createDiv({
+			cls: "clickable-icon pomodoro-stats-view__copy-button",
+			attr: { "aria-label": "Copy recent sessions to clipboard" }
+		});
+		setIcon(copyButton, "copy");
+
+		this.registerDomEvent(copyButton, "click", () => {
+			this.copyRecentStatsToClipboard();
+		});
+
 		this.recentSessionsEl = recentSection.createDiv({
 			cls: "pomodoro-stats-view__recent-sessions",
 		});
@@ -184,10 +204,10 @@ export class PomodoroStatsView extends ItemView {
 
 		// Get sessions for this range
 		const history = await this.plugin.pomodoroService.getSessionHistory();
-		const filteredHistory = this.filterSessionsByRange(history, range.start, range.end);
+		this.currentFilteredHistory = this.filterSessionsByRange(history, range.start, range.end);
 
 		this.renderStatsTable(stats);
-		this.renderRecentSessionsList(filteredHistory);
+		this.renderRecentSessionsList(this.currentFilteredHistory);
 	}
 
 	private getRangeForTab(tab: typeof PomodoroStatsView.prototype.selectedTab): { start: Date; end: Date } {
@@ -243,6 +263,52 @@ export class PomodoroStatsView extends ItemView {
 	private async calculateOverallStatsFromHistory(): Promise<PomodoroHistoryStats> {
 		const history = await this.plugin.pomodoroService.getSessionHistory();
 		return this.calculateOverallStats(history);
+	}
+
+	private copyRecentStatsToClipboard() {
+		try {
+			// Get the recent sessions that are currently visible (last 15, reversed)
+			const recentSessions = this.currentFilteredHistory.slice(-15).reverse();
+
+			if (recentSessions.length === 0) {
+				new Notice("No recent sessions to copy.");
+				return;
+			}
+
+			const lines = recentSessions.map(session => {
+				const startTime = parseTimestamp(session.startTime);
+				const endTime = session.endTime ? parseTimestamp(session.endTime) : new Date();
+				const timeRange = `${format(startTime, "MMM d HH:mm")} - ${format(endTime, "HH:mm")}`;
+
+				let typeLabel = "Work";
+				if (session.type === "short-break") typeLabel = "Short Break";
+				if (session.type === "long-break") typeLabel = "Long Break";
+
+				const taskName = session.taskPath
+					? session.taskPath.split("/").pop()?.replace(".md", "")
+					: "No Task";
+
+				const actualDuration = getSessionDuration(session);
+				const durationInfo = `${actualDuration}m / ${session.plannedDuration}m`;
+
+				const isInterrupted = session.interrupted === true;
+				const status = isInterrupted ? "Interrupted" : "Completed";
+
+				// Format: [Time Range] | [Type] | [Task Name] | [Duration] | [Status]
+				return `${timeRange} | ${typeLabel} | ${taskName} | ${durationInfo} | ${status}`;
+			});
+
+			const textToCopy = lines.join("\n");
+			navigator.clipboard.writeText(textToCopy).then(() => {
+				new Notice("Recent sessions copied to clipboard!");
+			}).catch(err => {
+				console.error("Failed to copy to clipboard", err);
+				new Notice("Failed to copy to clipboard.");
+			});
+		} catch (error) {
+			console.error("Error formatting sessions for clipboard:", error);
+			new Notice("Error occurred while copying statistics.");
+		}
 	}
 
 	private renderRecentSessionsList(history: PomodoroSessionHistory[]) {
