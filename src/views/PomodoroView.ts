@@ -205,16 +205,20 @@ export class PomodoroView extends ItemView {
 	}
 
 	async render() {
+		this.contentEl.addClass("pomodoro-view-content");
 		const container = this.contentEl.createDiv({ cls: "tasknotes-plugin pomodoro-view" });
 
+		// Top Group: Status and Timer
+		const topGroup = container.createDiv({ cls: "pomodoro-view__group pomodoro-view__group--top" });
+
 		// Status display at the top
-		this.statusDisplay = container.createDiv({
+		this.statusDisplay = topGroup.createDiv({
 			cls: "pomodoro-view__status",
 			text: this.t("views.pomodoro.status.ready"),
 		});
 
 		// Timer display with progress circle
-		const timerSection = container.createDiv({ cls: "pomodoro-view__timer-section" });
+		const timerSection = topGroup.createDiv({ cls: "pomodoro-view__timer-section" });
 
 		// Create progress circle container
 		this.progressContainer = timerSection.createDiv({
@@ -289,11 +293,18 @@ export class PomodoroView extends ItemView {
 		});
 		// Don't hide initially since we want them always visible
 
+		// Bottom Container: Holds Tasks (Middle) and Controls (Bottom)
+		// This container will fill the remaining space and spread Tasks and Controls
+		const bottomContainer = container.createDiv({ cls: "pomodoro-view__bottom-container" });
+
+		// Middle Group: Task selection and Task card
+		const middleGroup = bottomContainer.createDiv({ cls: "pomodoro-view__group pomodoro-view__group--middle" });
+
 		// Task display (minimal)
-		this.taskDisplay = container.createDiv({ cls: "pomodoro-view__task-display" });
+		this.taskDisplay = middleGroup.createDiv({ cls: "pomodoro-view__task-display" });
 
 		// Task selector section
-		const taskSelectorSection = container.createDiv({ cls: "pomodoro-view__task-selector" });
+		const taskSelectorSection = middleGroup.createDiv({ cls: "pomodoro-view__task-selector" });
 
 		// Task selector buttons container
 		const taskButtonsContainer = taskSelectorSection.createDiv({
@@ -315,8 +326,11 @@ export class PomodoroView extends ItemView {
 			cls: "pomodoro-view__task-card-container",
 		});
 
+		// Bottom Group: Controls and Stats
+		const bottomGroup = bottomContainer.createDiv({ cls: "pomodoro-view__group pomodoro-view__group--bottom" });
+
 		// Main control section - simplified
-		const controlSection = container.createDiv({ cls: "pomodoro-view__control-section" });
+		const controlSection = bottomGroup.createDiv({ cls: "pomodoro-view__control-section" });
 
 		// Primary controls (main timer controls)
 		const primaryControls = controlSection.createDiv({
@@ -354,7 +368,7 @@ export class PomodoroView extends ItemView {
 		this.skipBreakButton.addClass("pomodoro-view__skip-break-button--hidden");
 
 		// Minimal stats at the bottom
-		const statsSection = container.createDiv({ cls: "pomodoro-view__stats-section" });
+		const statsSection = bottomGroup.createDiv({ cls: "pomodoro-view__stats-section" });
 
 		this.statsDisplay = statsSection.createDiv({ cls: "pomodoro-view__stats" });
 
