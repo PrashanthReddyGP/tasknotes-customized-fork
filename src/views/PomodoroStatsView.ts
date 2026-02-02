@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Setting, setIcon, Notice } from "obsidian";
+import { ItemView, WorkspaceLeaf, Setting, setIcon, Notice, EventRef } from "obsidian";
 import {
 	format,
 	startOfWeek,
@@ -9,7 +9,7 @@ import {
 	subDays,
 } from "date-fns";
 import TaskNotesPlugin from "../main";
-import { POMODORO_STATS_VIEW_TYPE, PomodoroHistoryStats, PomodoroSessionHistory } from "../types";
+import { POMODORO_STATS_VIEW_TYPE, PomodoroHistoryStats, PomodoroSessionHistory, EVENT_POMODORO_COMPLETE } from "../types";
 import {
 	parseTimestamp,
 	getTodayLocal,
@@ -28,6 +28,7 @@ export class PomodoroStatsView extends ItemView {
 	// State
 	private selectedTab: "today" | "yesterday" | "week" | "month" | "all" = "today";
 	private currentFilteredHistory: PomodoroSessionHistory[] = [];
+	private listeners: EventRef[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: TaskNotesPlugin) {
 		super(leaf);
@@ -68,11 +69,31 @@ export class PomodoroStatsView extends ItemView {
 
 	async onOpen() {
 		await this.plugin.onReady();
+		this.registerEvents();
 		await this.render();
 	}
 
 	async onClose() {
+		this.listeners.forEach((listener) => this.plugin.emitter.offref(listener));
+		this.listeners = [];
 		this.contentEl.empty();
+	}
+
+	private registerEvents() {
+		this.listeners.forEach((listener) => this.plugin.emitter.offref(listener));
+		this.listeners = [];
+
+		this.listeners.push(
+			this.plugin.emitter.on("data-changed", () => {
+				this.refreshStats();
+			})
+		);
+
+		this.listeners.push(
+			this.plugin.emitter.on(EVENT_POMODORO_COMPLETE, () => {
+				this.refreshStats();
+			})
+		);
 	}
 
 	async render() {
@@ -404,13 +425,42 @@ export class PomodoroStatsView extends ItemView {
 				});
 
 				const overtMin = Math.max(0, actualDuration - session.plannedDuration);
-				const psCount = Math.max(0, (session.activePeriods?.length || 1) - 1);
+
+				// Calculate paused time: (End - Start) - Active
+				let pausedMin = 0;
+				if (session.endTime && session.startTime) {
+					const totalElapsed = (new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / (1000 * 60);
+					pausedMin = Math.max(0, Math.round(totalElapsed - actualDuration));
+				}
+
 				contentCol.createDiv({
 					cls: "session-sub-info",
 					text: this.t("views.pomodoroStats.recents.subInfo", {
 						overtime: overtMin > 0 ? `+${overtMin}m` : "0m",
-						paused: `${psCount}m`,
+						paused: `${pausedMin}m`,
 					}),
+				});
+
+				// Delete Action
+				const actionCol = sessionEl.createDiv({ cls: "session-card-actions" });
+				const deleteBtn = actionCol.createDiv({
+					cls: "clickable-icon pomodoro-session-delete",
+					attr: { "aria-label": "Delete session", title: "Delete session" },
+				});
+				setIcon(deleteBtn, "trash");
+
+				this.registerDomEvent(deleteBtn, "click", async (e) => {
+					e.stopPropagation();
+					e.preventDefault();
+					try {
+						if (confirm("Are you sure you want to delete this session?")) {
+							await this.plugin.pomodoroService.deleteSession(session);
+							await this.refreshStats();
+						}
+					} catch (error) {
+						console.error("Error deleting session:", error);
+						new Notice("Error deleting session");
+					}
 				});
 			} catch (e) {
 				console.error("Failed to render session details:", session, e);

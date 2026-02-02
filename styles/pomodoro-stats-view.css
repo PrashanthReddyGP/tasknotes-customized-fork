@@ -291,7 +291,7 @@
 
 .tasknotes-plugin.pomodoro-stats-view .pomodoro-session-card {
     display: grid;
-    grid-template-columns: 180px 100px 1fr;
+    grid-template-columns: 180px 100px 1fr 40px;
     gap: 32px;
     padding: 16px 24px;
     background: var(--tn-bg-secondary);
@@ -453,4 +453,28 @@
     .tasknotes-plugin.pomodoro-stats-view .stats-table-row {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+/* DELETE ACTION STYLES */
+.tasknotes-plugin.pomodoro-stats-view .session-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Removed height: 100% to let grid align it */
+}
+
+.tasknotes-plugin.pomodoro-stats-view .pomodoro-session-delete {
+    color: var(--tn-text-muted);
+    transition: color 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.tasknotes-plugin.pomodoro-stats-view .pomodoro-session-delete:hover {
+    color: var(--tn-color-error);
+    background-color: rgba(255, 0, 0, 0.1);
 }

@@ -1,5 +1,5 @@
 /* eslint-disable no-console, @typescript-eslint/no-non-null-assertion */
-import { Notice } from "obsidian";
+import { Notice, normalizePath, TFile } from "obsidian";
 import TaskNotesPlugin from "../main";
 import {
 	createDailyNote,
@@ -30,6 +30,8 @@ import {
 import { getSessionDuration, timerWorker } from "../utils/pomodoroUtils";
 
 export class PomodoroService {
+	private readonly POMODORO_STATS_FILE_PATH = "TaskNotes/Statistics/pomodoro-sessions.md";
+	private isWritingToFile = false;
 	private plugin: TaskNotesPlugin;
 	private timerWorker: Worker | null = null;
 	private state: PomodoroState;
@@ -55,10 +57,23 @@ export class PomodoroService {
 	async initialize() {
 		await this.loadState();
 		this.setupWorker();
+		await this.ensureStatsFileExists();
 
 		if (this.state.isRunning && this.state.currentSession) {
 			this.resumeTimer();
 		}
+
+		// Register file watcher for 2-way sync
+		this.plugin.registerEvent(
+			this.plugin.app.vault.on("modify", async (file) => {
+				if (file.path === normalizePath(this.POMODORO_STATS_FILE_PATH)) {
+					console.log(`[TaskNotes] Stats file modified. isWritingToFile=${this.isWritingToFile}`);
+					if (!this.isWritingToFile) {
+						await this.loadSessionsFromMarkdown();
+					}
+				}
+			})
+		);
 	}
 
 	/**
@@ -66,6 +81,26 @@ export class PomodoroService {
 	 */
 	setWebhookNotifier(notifier: IWebhookNotifier): void {
 		this.webhookNotifier = notifier;
+	}
+
+	private async ensureStatsFileExists(): Promise<void> {
+		const normalizedPath = normalizePath(this.POMODORO_STATS_FILE_PATH);
+		const folderPath = normalizedPath.substring(0, normalizedPath.lastIndexOf("/"));
+
+		try {
+			if (!(await this.plugin.app.vault.adapter.exists(folderPath))) {
+				await this.plugin.app.vault.createFolder(folderPath);
+			}
+
+			if (!(await this.plugin.app.vault.adapter.exists(normalizedPath))) {
+				// If file doesn't exist, create it with current history
+				const history = await this.getSessionHistory();
+				const content = this.generateMarkdownContent(history);
+				await this.plugin.app.vault.create(normalizedPath, content);
+			}
+		} catch (error) {
+			console.error("Failed to ensure pomodoro stats file exists:", error);
+		}
 	}
 
 	private setupWorker() {
@@ -201,7 +236,7 @@ export class PomodoroService {
 			? Math.max(1, Math.min(120, durationMinutes)) * 60
 			: null;
 		const durationSeconds =
-			customDurationSeconds || Math.max(1, Math.min(120 * 60, this.state.timeRemaining));
+			customDurationSeconds || Math.max(1, Math.min(120 * 60, this.plugin.settings.pomodoroWorkDuration * 60));
 
 		// Convert to minutes for planned duration
 		const plannedDurationMinutes = durationSeconds / 60;
@@ -1175,9 +1210,64 @@ export class PomodoroService {
 				history.push(historyEntry);
 				await this.saveSessionHistory(history);
 			}
+
+			// Sync with Markdown file
+			const fullHistory = await this.getSessionHistory();
+			await this.saveSessionsToMarkdown(fullHistory);
+
 		} catch (error) {
 			console.error("Failed to add session to history:", error);
 		}
+	}
+
+	async deleteSession(session: PomodoroSessionHistory): Promise<void> {
+		try {
+			if (this.plugin.settings.pomodoroStorageLocation === "daily-notes") {
+				await this.deleteSessionFromDailyNote(session);
+			} else {
+				const history = await this.getSessionHistory();
+				// Filter out the session with the matching ID
+				const newHistory = history.filter((s) => s.id !== session.id);
+				await this.saveSessionHistory(newHistory);
+			}
+
+			// Sync with Markdown file
+			const fullHistory = await this.getSessionHistory();
+			await this.saveSessionsToMarkdown(fullHistory);
+
+			new Notice("Session deleted from history");
+		} catch (error) {
+			console.error("Failed to delete session:", error);
+			new Notice("Failed to delete session");
+		}
+	}
+
+	private async deleteSessionFromDailyNote(session: PomodoroSessionHistory): Promise<void> {
+		if (!appHasDailyNotesPluginLoaded()) {
+			throw new Error("Daily Notes plugin is not enabled");
+		}
+
+		const sessionDate = new Date(session.startTime);
+		const moment = (window as any).moment(sessionDate);
+		const allDailyNotes = getAllDailyNotes();
+		const dailyNote = getDailyNote(moment, allDailyNotes);
+
+		if (!dailyNote) {
+			console.warn("Daily note not found for session date:", sessionDate);
+			return;
+		}
+
+		const pomodoroField = this.plugin.fieldMapper.toUserField("pomodoros");
+
+		await this.plugin.app.fileManager.processFrontMatter(dailyNote, (frontmatter: any) => {
+			if (frontmatter[pomodoroField] && Array.isArray(frontmatter[pomodoroField])) {
+				const sessions = frontmatter[pomodoroField] as PomodoroSessionHistory[];
+				const index = sessions.findIndex((s) => s.id === session.id);
+				if (index !== -1) {
+					sessions.splice(index, 1);
+				}
+			}
+		});
 	}
 
 
@@ -1445,16 +1535,8 @@ export class PomodoroService {
 			const pomodoroField = this.plugin.fieldMapper.toUserField("pomodoros");
 
 			await this.plugin.app.fileManager.processFrontMatter(dailyNote, (frontmatter) => {
-				// Get existing sessions and append new ones
-				const existingSessions = frontmatter[pomodoroField] || [];
-				const existingIds = new Set(existingSessions.map((s: any) => s.id));
-
-				// Only add sessions that don't already exist
-				const newSessions = sessions.filter((session) => !existingIds.has(session.id));
-
-				if (newSessions.length > 0) {
-					frontmatter[pomodoroField] = [...existingSessions, ...newSessions];
-				}
+				// Overwrite with the sessions for this date (handles additions, updates, and removals of non-last items)
+				frontmatter[pomodoroField] = sessions;
 			});
 		} catch (error) {
 			console.error(`Failed to update daily note for ${dateStr}:`, error);
@@ -1516,5 +1598,244 @@ export class PomodoroService {
 			new Notice(this.translate("services.pomodoro.notices.migrationFailure"));
 			throw error;
 		}
+	}
+
+
+
+	private async loadSessionsFromMarkdown(): Promise<void> {
+		if (this.isWritingToFile) return;
+
+		try {
+			const normalizedPath = normalizePath(this.POMODORO_STATS_FILE_PATH);
+			const file = this.plugin.app.vault.getAbstractFileByPath(normalizedPath);
+			if (!(file instanceof TFile)) return;
+
+			const content = await this.plugin.app.vault.read(file);
+			const lines = content.split("\n");
+			const newHistory: PomodoroSessionHistory[] = [];
+
+			// Skip header (2 lines) and parse
+			// If file has only header (2 lines or less), and we have history in memory/plugin data, 
+			// we should NOT wipe the history unless we are sure the user deleted the content.
+			// However, sync source of truth problem:
+			// - If user deletes all rows in MD, they want to clear history.
+			// - If plugin initializes empty file, it shouldn't clear history.
+			// Solution: `ensureStatsFileExists` now writes history to file on creation.
+			// But to be extra safe: if lines.length <= 2, check if we just created it? 
+			// No, `ensureStatsFileExists` handles the startup case.
+			// If file is empty here, it means user deleted content or something went wrong.
+			// We will proceed with parsing (which yields empty array) and update history.
+
+			for (let i = 2; i < lines.length; i++) {
+				const line = lines[i].trim();
+				if (!line || !line.startsWith("|")) continue;
+
+				const parts = line.split("|").map(p => p.trim());
+				// Needs at least 10 parts (last one is empty string usually due to trailing pipe)
+				// | Date | Start | End | Actual (m) | Planned (m) | Task | Category | Status | ID |
+				// Backward compatibility: If 9 parts, it's the old format (missing Planned)
+				if (parts.length < 9) continue;
+
+				const dateStr = parts[1];
+				const startTimeStr = parts[2];
+				const endTimeStr = parts[3];
+				const actualDurationStr = parts[4];
+
+				// Handle new column if present
+				let plannedDurationStr = "25"; // Default
+				let taskLink: string;
+				let category: string;
+				let status: string;
+				let id: string;
+
+				if (parts.length >= 10) {
+					// New format
+					plannedDurationStr = parts[5];
+					taskLink = parts[6];
+					category = parts[7];
+					status = parts[8];
+					id = parts[9];
+				} else {
+					// Old format fallback
+					taskLink = parts[5];
+					category = parts[6];
+					status = parts[7];
+					id = parts[8];
+				}
+
+				if (!dateStr || !startTimeStr || !id) {
+					console.debug("[TaskNotes] Skipping incomplete line:", parts);
+					continue;
+				}
+
+				// Construct ISO strings
+				let startTime = "";
+				try {
+					// Check if dateStr is just "MMM D" (e.g. "Feb 1")
+					let parseableDateStr = dateStr;
+					if (/^[A-Za-z]{3}\s+\d{1,2}$/.test(dateStr)) {
+						// Append current year
+						const currentYear = new Date().getFullYear();
+						parseableDateStr = `${dateStr} ${currentYear}`;
+					}
+
+					const startDateTimeStr = `${parseableDateStr} ${startTimeStr}`;
+					startTime = new Date(startDateTimeStr).toISOString();
+
+					if (startTime === "Invalid Date") throw new Error("Invalid Date");
+				} catch (e) {
+					console.warn(`[TaskNotes] Skipping invalid session row: ${dateStr} ${startTimeStr}`, e);
+					continue; // Invalid date
+				}
+
+				let endTime = "";
+				if (endTimeStr) {
+					try {
+						let parseableDateStr = dateStr;
+						if (/^[A-Za-z]{3}\s+\d{1,2}$/.test(dateStr)) {
+							const currentYear = new Date().getFullYear();
+							parseableDateStr = `${dateStr} ${currentYear}`;
+						}
+
+						endTime = new Date(`${parseableDateStr} ${endTimeStr}`).toISOString();
+					} catch (e) {
+						// Ignore invalid end time
+					}
+				}
+
+				const type = category === 'Long Break' ? 'long-break' : (category === 'Short Break' ? 'short-break' : 'work');
+				const completed = status === 'Completed';
+				const plannedDuration = parseInt(plannedDurationStr) || 25;
+				const actualDurationWithOvertime = parseInt(actualDurationStr) || 0; // This is what comes from file (Actual column)
+
+				// Reconstruct logic:
+				// If status is Completed:
+				//   Actual (from file) = Total Duration.
+				//   Session Planned Duration = Planned column.
+				//   Wait, 'plannedDuration' in this.state usually means TARGET duration.
+				//   The user wants "actual / target" in UI.
+				//   So `plannedDuration` on object should be from Planned column.
+
+				let taskPath = undefined;
+				if (taskLink && taskLink !== "-" && taskLink !== "") {
+					const match = taskLink.match(/\[\[(.*?)(\|(.*))?\]\]/);
+					if (match) {
+						const linkText = match[1];
+						const file = this.plugin.app.metadataCache.getFirstLinkpathDest(linkText, "");
+						if (file) taskPath = file.path;
+						else taskPath = linkText; // Keep as text even if file not found (could be plain text)
+					} else {
+						// Plain text task name
+						taskPath = taskLink;
+					}
+				}
+
+				// Reconstruct activePeriods
+				// We need activePeriods to sum up to `actualDurationWithOvertime` (minutes)
+				// Create one period from startTime to startTime + actualDuration
+				const activePeriods = [];
+				if (startTime) {
+					const start = new Date(startTime).getTime();
+					const durationMs = actualDurationWithOvertime * 60 * 1000;
+					const end = start + durationMs;
+					activePeriods.push({
+						startTime: startTime,
+						endTime: new Date(end).toISOString()
+					});
+				}
+
+				const session: PomodoroSessionHistory = {
+					id,
+					startTime,
+					endTime,
+					plannedDuration: plannedDuration,
+					type: type as any,
+					taskPath,
+					completed,
+					interrupted: !completed,
+					activePeriods: activePeriods
+				};
+
+				newHistory.push(session);
+			}
+
+			// Update history
+			await this.saveSessionHistory(newHistory);
+
+			// Notify UI
+			this.plugin.emitter.trigger("data-changed");
+			console.log(`[TaskNotes] Successfully loaded ${newHistory.length} sessions from markdown.`);
+
+		} catch (error) {
+			console.error("Failed to load sessions from markdown:", error);
+		}
+	}
+	private async saveSessionsToMarkdown(history: PomodoroSessionHistory[]): Promise<void> {
+		if (this.isWritingToFile) return;
+		this.isWritingToFile = true;
+
+		try {
+			const normalizedPath = normalizePath(this.POMODORO_STATS_FILE_PATH);
+			await this.ensureStatsFileExists();
+
+			const content = this.generateMarkdownContent(history);
+			await this.plugin.app.vault.adapter.write(normalizedPath, content);
+		} catch (error) {
+			console.error("Failed to save sessions to markdown:", error);
+		} finally {
+			// Small delay to ensure watcher doesn't catch our own write
+			setTimeout(() => {
+				this.isWritingToFile = false;
+			}, 1000);
+		}
+	}
+
+	private generateMarkdownContent(history: PomodoroSessionHistory[]): string {
+		let content = "| Date | Start Time | End Time | Actual (m) | Planned (m) | Task | Category | Status | ID |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n";
+
+		// Sort by date descending
+		const sortedHistory = [...history].sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+
+		for (const session of sortedHistory) {
+			const date = new Date(session.startTime);
+			// Use local date to match the local time display and input
+			// en-CA format gives YYYY-MM-DD
+			const dateStr = date.toLocaleDateString('en-CA');
+			const startTimeStr = date.toLocaleTimeString('en-GB', { hour12: false });
+
+			let endTimeStr = "";
+			if (session.endTime) {
+				const endDate = new Date(session.endTime);
+				endTimeStr = endDate.toLocaleTimeString('en-GB', { hour12: false });
+			}
+
+			const actualDuration = Math.round(getSessionDuration(session));
+			const plannedDuration = session.plannedDuration || 25;
+
+			let taskStr = "-";
+			if (session.taskPath) {
+				const file = this.plugin.app.vault.getAbstractFileByPath(session.taskPath);
+				if (file instanceof TFile) {
+					taskStr = `[[${file.basename}]]`;
+				} else {
+					// Check if it looks like a path or just text
+					if (session.taskPath.includes("/") || session.taskPath.endsWith(".md")) {
+						const basename = session.taskPath.split("/").pop()?.replace(/\.md$/, "") || session.taskPath;
+						taskStr = `[[${basename}]]`;
+					} else {
+						// Plain text task name
+						taskStr = session.taskPath;
+					}
+				}
+			}
+
+			const category = session.type === 'work' ? 'Work' : (session.type === 'long-break' ? 'Long Break' : 'Short Break');
+			const status = session.completed ? 'Completed' : 'Interrupted';
+			const id = session.id;
+
+			content += `| ${dateStr} | ${startTimeStr} | ${endTimeStr} | ${actualDuration} | ${plannedDuration} | ${taskStr} | ${category} | ${status} | ${id} |\n`;
+		}
+
+		return content;
 	}
 }
